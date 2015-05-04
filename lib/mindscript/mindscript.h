@@ -28,8 +28,18 @@ typedef struct _mswork_exp MSWORKEXP;
 #define MSTYPELT     16
 #define MSTYPEGE     17
 #define MSTYPELE     18
-#define MSTYPEGETPBP 19
-#define MSTYPESETPBP 20
+#define MSTYPEGETXBP 19
+#define MSTYPESETXBP 20
+#define MSTYPEGETXFL 21
+#define MSTYPESETXFL 22
+#define MSTYPEGETXFR 23
+#define MSTYPESETXFR 24
+#define MSTYPEGETYBP 25
+#define MSTYPESETYBP 26
+#define MSTYPEGETYFT 27
+#define MSTYPESETYFT 28
+#define MSTYPEGETYFB 29
+#define MSTYPESETYFB 30
 
 struct _mswork_pair{
   MSWORKEXP* exp1;
@@ -86,10 +96,16 @@ struct _mswork_chggrp{
 };
 typedef struct _mswork_chggrp MSWORKCHGGRP;
 
-struct _mswork_setpbp{
+struct _mswork_setpos{
   MSWORKEXP* exp;
 };
-typedef struct _mswork_setpbp MSWORKSETPBP;
+typedef struct _mswork_setpos MSWORKSETPOS;
+typedef struct _mswork_setpos MSWORKSETXBP;
+typedef struct _mswork_setpos MSWORKSETXFL;
+typedef struct _mswork_setpos MSWORKSETXFR;
+typedef struct _mswork_setpos MSWORKSETYBP;
+typedef struct _mswork_setpos MSWORKSETYFT;
+typedef struct _mswork_setpos MSWORKSETYFB;
 
 
 int ms_init(const char* src);

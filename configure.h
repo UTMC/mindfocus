@@ -50,7 +50,7 @@
 #define ANIMATION
 
 /* ヴァージョン情報 */
-#define VERSION 0.86
+#define VERSION 0.87
 
 /* デバッグフラグ */
 /* 各種デバッグメッセージを表示するようになる */

@@ -44,10 +44,23 @@ static int revert;
 static int xfd;
 static int anime_pipe[2];
 static XEvent retry_event;
+static int mf_xerr = 0;
 
 #ifdef DEBUG
 int _Xdebug = 1;
 #endif /* DEBUG */
+
+int
+errorhandler(Display *display, XErrorEvent *err)
+{
+#ifdef DEBUG
+  char errmsg[128];
+  XGetErrorText(display, err->error_code, errmsg, sizeof(errmsg));
+  printf("An Error occured.\n  %s\n", errmsg);
+#endif
+  mf_xerr = 1;
+  return 0;
+}
 
 void
 calcpos(int* x, int* y, POSITION* pos)
@@ -57,43 +70,150 @@ calcpos(int* x, int* y, POSITION* pos)
     return;
   }
 
-  switch(pos->method){
+  switch(pos->x_method){
   case METHOD_PLUS:
-    pos->from_left = pos->param;
+    pos->from_left = pos->x_param;
     pos->from_right = pos->win_w - pos->from_left;
-    pos->percent = pos->from_left * 100 / pos->win_w;
+    pos->x_percent = pos->from_left * 100 / pos->win_w;
     break;
   case METHOD_MINUS:
-    pos->from_right = pos->param;
+    pos->from_right = pos->x_param;
     pos->from_left = pos->win_w - pos->from_right;
-    pos->percent = pos->from_left * 100 / pos->win_w;
+    pos->x_percent = pos->from_left * 100 / pos->win_w;
     break;
   case METHOD_PER:
-    pos->percent = pos->param;
-    pos->from_left = (int)((double)(pos->win_w * pos->param) / 100);
+    pos->x_percent = pos->x_param;
+    pos->from_left = (int)((double)(pos->win_w * pos->x_param) / 100);
     pos->from_right = pos->win_w - pos->from_left;
     break;
   }
+  switch(pos->y_method){
+  case METHOD_PLUS:
+    pos->from_top = pos->y_param;
+    pos->from_bottom = pos->win_h - pos->from_top;
+    pos->y_percent = pos->from_top * 100 / pos->win_h;
+    break;
+  case METHOD_MINUS:
+    pos->from_bottom = pos->y_param;
+    pos->from_top = pos->win_h - pos->from_bottom;
+    pos->y_percent = pos->from_top * 100 / pos->win_h;
+    break;
+  case METHOD_PER:
+    pos->y_percent = pos->y_param;
+    pos->from_top = (int)((double)(pos->win_h * pos->y_param) / 100);
+    pos->from_bottom = pos->win_h - pos->from_top;
+    break;
+  }
   *x = pos->win_x + pos->from_left;
-  *y = pos->win_y;
+  *y = pos->win_y + pos->from_top;
 }
 
 void
-set_pos_by_per(int pos)
+set_x_pos_by_per(int x_pos)
 {
   static char command = PIPE_MOVE;
   int x, y;
 
-  winpos.param = pos;
-  winpos.method = METHOD_PER;
+  winpos.x_param = x_pos;
+  winpos.x_method = METHOD_PER;
   calcpos(&x, &y, &winpos);
   write(anime_pipe[1], &command, 1);
 }
 
 int
-get_pos_by_per()
+get_x_pos_by_per()
 {
-  return winpos.percent;
+  return winpos.x_percent;
+}
+
+void
+set_x_pos_from_left(int x_pos)
+{
+  static char command = PIPE_MOVE;
+  int x, y;
+
+  winpos.x_param = x_pos;
+  winpos.x_method = METHOD_PLUS;
+  calcpos(&x, &y, &winpos);
+  write(anime_pipe[1], &command, 1);
+}
+
+int
+get_x_pos_from_left()
+{
+  return winpos.from_left;
+}
+
+void
+set_x_pos_from_right(int x_pos)
+{
+  static char command = PIPE_MOVE;
+  int x, y;
+
+  winpos.x_param = x_pos;
+  winpos.x_method = METHOD_MINUS;
+  calcpos(&x, &y, &winpos);
+  write(anime_pipe[1], &command, 1);
+}
+
+int
+get_x_pos_from_right()
+{
+  return winpos.from_right;
+}
+
+void
+set_y_pos_by_per(int y_pos)
+{
+  static char command = PIPE_MOVE;
+  int x, y;
+
+  winpos.y_param = y_pos;
+  winpos.y_method = METHOD_PER;
+  calcpos(&x, &y, &winpos);
+  write(anime_pipe[1], &command, 1);
+}
+
+int
+get_y_pos_by_per()
+{
+  return winpos.y_percent;
+}
+
+void
+set_y_pos_from_top(int y_pos)
+{
+  static char command = PIPE_MOVE;
+  int x, y;
+
+  winpos.y_param = y_pos;
+  winpos.y_method = METHOD_PLUS;
+  calcpos(&x, &y, &winpos);
+  write(anime_pipe[1], &command, 1);
+}
+
+int
+get_y_pos_from_top()
+{
+  return winpos.from_top;
+}
+
+void
+set_y_pos_from_bottom(int y_pos)
+{
+  static char command = PIPE_MOVE;
+  int x, y;
+
+  winpos.y_param = y_pos;
+  winpos.y_method = METHOD_MINUS;
+  calcpos(&x, &y, &winpos);
+  write(anime_pipe[1], &command, 1);
+}
+
+int
+get_y_pos_from_bottom()
+{
+  return winpos.from_bottom;
 }
 
 void
@@ -129,8 +249,8 @@ help(int exitcode)
 {
   puts("Usage: mindfocus [options] [mfc filename1] [options1] ...");
   puts("Options:");
-  puts("  -position <pos> |");
-  puts("  -p <pos>\t: set display position. (([+-]?<n>)|(<n>%))");
+  puts("  -position <x>[,<y>] |");
+  puts("  -p <x>[,<y>]\t: set display position. (([+-]?<n>)|(<n>%))");
   puts("  -version|");
   puts("  -v\t\t: show version information.");
   puts("  -help |");
@@ -161,13 +281,14 @@ stackctl(Window win, int stack, int title)
 
   if(stack){
     /* stack control */
-    if(win == 1){
+    if((PointerRoot == win) || (None == win)) {
       /* invalid window */
       return 0;
     }
     focus = win;
     if(title){
       XQueryTree(d, win, &root, &parent, &children, &nchildren);
+      XFree(children);
       if(win == root)
 	return 0;
       for(;;){
@@ -175,6 +296,7 @@ stackctl(Window win, int stack, int title)
 	  break;
 	focus = parent;
 	XQueryTree(d, focus, &root, &parent, &children, &nchildren);
+	XFree(children);
       }
       XGetGeometry(d, focus, &root, &tx, &ty, &width, &height, &border, &depth);
     }
@@ -200,7 +322,7 @@ getpos(int title, int* x, int* y, POSITION* pos, Window* win)
   /* check focus window */
 #ifndef OLD_METHOD
   XGetInputFocus(d, &focus, &revert);
-  if(focus == 1){
+  if((PointerRoot == focus) || (None == focus)) {
     /* invalid window */
     pos->win_w = 0;
     *win = focus;
@@ -210,13 +332,14 @@ getpos(int title, int* x, int* y, POSITION* pos, Window* win)
   }else if(focus == RootWindow(d, 0)){
     /* root window */
     XGetGeometry(d, *win, &root, &pos->win_x, &pos->win_y,
-		 &pos->win_w, &height, &border, &depth);
+		 &pos->win_w, &pos->win_h, &border, &depth);
     XSendEvent(d, w, True, 0, &retry_event);
     calcpos(x, y, pos);
     return;
   }
+
 #else /* OLD_METHOD */
-  for(XGetInputFocus(d, &focus, &revert); focus == 1;)
+  for(XGetInputFocus(d, &focus, &revert); PointerRoot == focus;)
     XGetInputFocus(d, &focus, &revert);
 #endif /* OLD_METHOD */
 
@@ -231,19 +354,38 @@ getpos(int title, int* x, int* y, POSITION* pos, Window* win)
   }else{
     /* TITLE = Auto */
 #ifndef OLD_METHOD
-
-    XQueryTree(d, focus, &root, &parent, &children, &nchildren);
-    for(;parent != root;){
-      focus = parent;
+    do{
       XQueryTree(d, focus, &root, &parent, &children, &nchildren);
+      if(mf_xerr != 0)
+	break; /* quit */
+      XFree(children);
+      for(;parent != root;){
+	focus = parent;
+	XQueryTree(d, focus, &root, &parent, &children, &nchildren);
+	if(mf_xerr != 0)
+	  break; /* quit */
+	XFree(children);
+      }
+      if(mf_xerr != 0)
+	break; /* quit */
+      XGetGeometry(d, focus, &root, x, y, &width, &height, &border, &depth);
+      XSelectInput(d, focus, MF_MASK);
+    }while(0); /* dummy block */
+    if(mf_xerr != 0){
+      mf_xerr = 0;
+      pos->win_w = 0;
+      *win = focus;
+      XSendEvent(d, w, True, 0, &retry_event);
+      calcpos(x, y, pos);
+      return;
     }
-    XGetGeometry(d, focus, &root, x, y, &width, &height, &border, &depth);
-    XSelectInput(d, focus, MF_MASK);
-
+    
 #else /* OLD_METHOD */
     XQueryTree(d, focus, &root, &parent, &children, &nchildren);
+    XFree(children);
     if(focus == root){
       XQueryTree(d, *win, &root, &parent, &children, &nchildren);
+      XFree(children);
       if(focus == root)
         focus = *win;
       XGetGeometry(d, focus, &root, x, y, &width, &height, &border, &depth);
@@ -258,6 +400,7 @@ getpos(int title, int* x, int* y, POSITION* pos, Window* win)
 	  break;
 	focus = parent;
 	XQueryTree(d, focus, &root, &parent, &children, &nchildren);
+	XFree(children);
       }
       XGetGeometry(d, focus, &root, x, y, &width, &height, &border, &depth);
       XSelectInput(d, focus, MF_MASK);
@@ -273,6 +416,7 @@ getpos(int title, int* x, int* y, POSITION* pos, Window* win)
   pos->win_x = *x;
   pos->win_y = *y;
   pos->win_w = width;
+  pos->win_h = height;
   calcpos(x, y, pos);
 }
 
@@ -311,33 +455,66 @@ mainloop(INIFILE* ini, const char* position)
   else
     ptr = ini_getstr(ini, "POS");
   if(ptr){
-    if(*ptr == '-'){
-      winpos.param = atoi(&ptr[1]);
-      winpos.method = METHOD_MINUS;
-    }else if(*ptr == '+'){
-      winpos.param = atoi(&ptr[1]);
-      winpos.method = METHOD_PLUS;
+    p = (char *)ptr;
+    if(*p == '-'){
+      winpos.x_param = atoi(++p);
+      for(; isdigit(*p); p++) /* skip num */;
+      winpos.x_method = METHOD_MINUS;
+    }else if(*p == '+'){
+      winpos.x_param = atoi(++p);
+      for(; isdigit(*p); p++) /* skip num */;
+      winpos.x_method = METHOD_PLUS;
     }else{
-      winpos.param = atoi(ptr);
-      for(p = (char *)ptr; ('0' <= *p) && (*p <= '9'); p++);
-      if(*p == '%')
-	winpos.method = METHOD_PER;
-      else
-	winpos.method = METHOD_PLUS;
+      winpos.x_param = atoi(p);
+      for(; isdigit(*p); p++) /* skip num */;
+      if(*p == '%'){
+	winpos.x_method = METHOD_PER;
+	p++;
+      }else{
+	winpos.x_method = METHOD_PLUS;
+      }
+    }
+    if(*p == ','){
+      /* position-Y */
+      p++;
+      if(*p == '-'){
+	winpos.y_param = atoi(++p);
+	for(; isdigit(*p); p++) /* skip num */;
+	winpos.y_method = METHOD_MINUS;
+      }else if(*p == '+'){
+	winpos.y_param = atoi(++p);
+	for(; isdigit(*p); p++) /* skip num */;
+	winpos.y_method = METHOD_PLUS;
+      }else{
+	winpos.y_param = atoi(p);
+	for(; isdigit(*p); p++) /* skip num */;
+	if(*p == '%'){
+	  winpos.y_method = METHOD_PER;
+	  p++;
+	}else{
+	  winpos.y_method = METHOD_PLUS;
+	}
+      }
+    }else{
+      winpos.y_param = 0;
+      winpos.y_method = METHOD_PLUS;
     }
   }else{
-    winpos.param = 80;
-    winpos.method = METHOD_PER;
+    winpos.x_param = 80;
+    winpos.x_method = METHOD_PER;
+    winpos.y_param = 0;
+    winpos.y_method = METHOD_PLUS;
   }
   winpos.win_x = 0;
   winpos.win_y = 0;
   winpos.win_w = 0;
+  winpos.win_h = 0;
 
   xfd = ConnectionNumber(d);
   pipe(anime_pipe);
   fd_max = (anime_pipe[0] > xfd)? anime_pipe[0]+1: xfd+1;
 
-  for(XGetInputFocus(d, &focus, &revert); focus == 1;)
+  for(XGetInputFocus(d, &focus, &revert); PointerRoot == focus;)
     XGetInputFocus(d, &focus, &revert);
   getpos(title, &x, &y, &winpos, &win);
 
@@ -349,7 +526,7 @@ mainloop(INIFILE* ini, const char* position)
     XFlush(d);
   }
 
-  srand(winpos.param+time(NULL));
+  srand(winpos.x_param+time(NULL));
   bzero(&sig, sizeof(struct sigaction));
   sig.sa_handler = animefunc;
   sigaction(SIGALRM, &sig, NULL);
@@ -453,18 +630,18 @@ main(int argc, char** argv)
 
   /* options */
   for(i = 1; i < argc; i++){
-    if((*argv[i] == '-') && (argc != (i-1))){
+    if(*argv[i] == '-'){
       /* option */
-      if(!strcmp(&argv[i][1], "p") ||
-	 !strcmp(&argv[i][1], "position")){
-	   position = argv[++i];
-	 }else if(!strcmp(&argv[i][1], "v") ||
-		  !strcmp(&argv[i][1], "version")){
-		    version_info();
-		  }else{
-		    fprintf(stderr, "%s: invalid option.\n", argv[0]);
-		    help(1);
-		  }
+      if((!strcmp(&argv[i][1], "p") ||
+	  !strcmp(&argv[i][1], "position")) && (i != argc-1)){
+	position = argv[++i];
+      }else if(!strcmp(&argv[i][1], "v") ||
+	       !strcmp(&argv[i][1], "version")){
+	version_info();
+      }else{
+	fprintf(stderr, "%s: invalid option.\n", argv[0]);
+	help(1);
+      }
     }else{
       /* mfc filename */
 
@@ -604,6 +781,7 @@ main(int argc, char** argv)
   values.width = mfc->width;
   values.height = mfc->height;
   XConfigureWindow(d, w, CWWidth|CWHeight, &values);
+  XSetErrorHandler(errorhandler);
 
   retry_event.type = FocusOut;
 

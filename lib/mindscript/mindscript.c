@@ -9,9 +9,12 @@
 #ifdef DEBUG
 static char* types[] = {
   "<number>", "<symbol>", "begin", "cond", "setq", "rand", "equal",
-    "chg-grp", "main", "define", "pair", "plus", "minus", "and", "or",
-      "greater than", "less than", "greater or equal", "less or equal",
-	"get-pos-by-per", "set-pos-by-per",
+  "chg-grp", "main", "define", "pair", "plus", "minus", "and", "or",
+  "greater than", "less than", "greater or equal", "less or equal",
+  "get-x-pos-by-per", "set-x-pos-by-per", "get-x-pos-from-left",
+  "set-x-pos-from-left", "get-x-pos-from-right", "set-x-pos-from-right",
+  "get-y-pos-by-per", "set-y-pos-by-per", "get-y-pos-from-top",
+  "set-y-pos-from-top", "get-y-pos-from-bottom", "set-y-pos-from-bottom"
 };
 #endif /* DEBUG */
 
@@ -77,11 +80,41 @@ ms_exec(MSWORKEXP* exp)
 #endif /* DEBUG */
     chg_grp(c);
     break;
-  case MSTYPEGETPBP:
-    return get_pos_by_per();
-  case MSTYPESETPBP:
-    c = ms_exec(((MSWORKSETPBP*)exp->ptr)->exp);
-    set_pos_by_per(c);
+  case MSTYPEGETXBP:
+    return get_x_pos_by_per();
+  case MSTYPESETXBP:
+    c = ms_exec(((MSWORKSETXBP*)exp->ptr)->exp);
+    set_x_pos_by_per(c);
+    break;
+  case MSTYPEGETXFL:
+    return get_x_pos_from_left();
+  case MSTYPESETXFL:
+    c = ms_exec(((MSWORKSETXFL*)exp->ptr)->exp);
+    set_x_pos_from_left(c);
+    break;
+  case MSTYPEGETXFR:
+    return get_x_pos_from_right();
+  case MSTYPESETXFR:
+    c = ms_exec(((MSWORKSETXFR*)exp->ptr)->exp);
+    set_x_pos_from_right(c);
+    break;
+  case MSTYPEGETYBP:
+    return get_y_pos_by_per();
+  case MSTYPESETYBP:
+    c = ms_exec(((MSWORKSETYBP*)exp->ptr)->exp);
+    set_y_pos_by_per(c);
+    break;
+  case MSTYPEGETYFT:
+    return get_y_pos_from_top();
+  case MSTYPESETYFT:
+    c = ms_exec(((MSWORKSETYFT*)exp->ptr)->exp);
+    set_y_pos_from_top(c);
+    break;
+  case MSTYPEGETYFB:
+    return get_y_pos_from_bottom();
+  case MSTYPESETYFB:
+    c = ms_exec(((MSWORKSETYFB*)exp->ptr)->exp);
+    set_y_pos_from_bottom(c);
     break;
   case MSTYPEEQUAL:
     return (ms_exec(((MSWORKEQUAL*)exp->ptr)->exp1) ==
@@ -315,15 +348,25 @@ ms_makestruct(int stack)
     buf[0]->ptr = malloc(sizeof(MSWORKCHGGRP));
     ((MSWORKCHGGRP*)buf[0]->ptr)->exp = buf[1];
     break;
-  case MSTYPESETPBP:
+  case MSTYPESETXBP:
+  case MSTYPESETXFL:
+  case MSTYPESETXFR:
+  case MSTYPESETYBP:
+  case MSTYPESETYFT:
+  case MSTYPESETYFB:
     if(stack != 2){
       ms_error(NULL);
       return 0;
     }
-    buf[0]->ptr = malloc(sizeof(MSWORKSETPBP));
-    ((MSWORKSETPBP*)buf[0]->ptr)->exp = buf[1];
+    buf[0]->ptr = malloc(sizeof(MSWORKSETPOS));
+    ((MSWORKSETPOS*)buf[0]->ptr)->exp = buf[1];
     break;
-  case MSTYPEGETPBP:
+  case MSTYPEGETXBP:
+  case MSTYPEGETXFL:
+  case MSTYPEGETXFR:
+  case MSTYPEGETYBP:
+  case MSTYPEGETYFT:
+  case MSTYPEGETYFB:
     if(stack != 1){
       ms_error(NULL);
       return 0;
@@ -481,11 +524,29 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	  break;
 	}
       case 'g':
-	if(ms_check(*buf, size, "get-pos-by-per")){
-	  /* (get-pos-by-per) */
-	  exp->type = MSTYPEGETPBP;
+	exp->type = MSTYPENULL;
+	switch(size + 1){
+	case sizeof("get-pos-by-per"): /* NOTE: old-style-func */
+	  if(ms_check(*buf, size, "get-pos-by-per")) exp->type = MSTYPEGETXBP;
+	  break;
+	case sizeof("get-?-pos-by-per"):
+	  if(ms_check(*buf, size, "get-x-pos-by-per")) exp->type = MSTYPEGETXBP;
+	  else if(ms_check(*buf, size, "get-y-pos-by-per")) exp->type = MSTYPEGETYBP;
+	  break;
+	case sizeof("get-x-pos-from-left"):
+	  if(ms_check(*buf, size, "get-x-pos-from-left")) exp->type = MSTYPEGETXFL;
+	  break;
+	case sizeof("get-x-pos-from-right"):
+	  if(ms_check(*buf, size, "get-x-pos-from-right")) exp->type = MSTYPEGETXFR;
+	  break;
+	case sizeof("get-y-pos-from-top"):
+	  if(ms_check(*buf, size, "get-y-pos-from-top")) exp->type = MSTYPEGETYFT;
+	  break;
+	case sizeof("get-y-pos-from-bottom"):
+	  if(ms_check(*buf, size, "get-y-pos-from-bottom")) exp->type = MSTYPEGETYFB;
 	  break;
 	}
+	if(MSTYPENULL != exp->type) break;
       case 'o':
 	if(ms_check(*buf, size, "or")){
 	  /* (or exp1 exp2) */
@@ -499,15 +560,32 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	  break;
 	}
       case 's':
-	if(ms_check(*buf, size, "setq")){
-	  /* (setq var n) */
-	  exp->type = MSTYPESETQ;
+	exp->type =MSTYPENULL;
+	switch(size + 1){
+	case sizeof("setq"):
+	  if(ms_check(*buf, size, "setq")) exp->type = MSTYPESETQ;
 	  break;
-	}else if(ms_check(*buf, size, "set-pos-by-per")){
-	  /* (set-pos-by-per pos) */
-	  exp->type = MSTYPESETPBP;
+	case sizeof("set-pos-by-per"): /* NOTE: old-style-func */
+	  if(ms_check(*buf, size, "set-pos-by-per")) exp->type = MSTYPESETXBP;
+	  break;
+	case sizeof("set-?-pos-by-per"):
+	  if(ms_check(*buf, size, "set-x-pos-by-per")) exp->type = MSTYPESETXBP;
+	  else if(ms_check(*buf, size, "set-y-pos-by-per")) exp->type = MSTYPESETYBP;
+	  break;
+	case sizeof("set-x-pos-from-left"):
+	  if(ms_check(*buf, size, "set-x-pos-from-left")) exp->type = MSTYPESETXFL;
+	  break;
+	case sizeof("set-x-pos-from-right"):
+	  if(ms_check(*buf, size, "set-x-pos-from-right")) exp->type = MSTYPESETXFR;
+	  break;
+	case sizeof("set-y-pos-from-top"):
+	  if(ms_check(*buf, size, "set-y-pos-from-top")) exp->type = MSTYPESETYFT;
+	  break;
+	case sizeof("set-y-pos-from-bottom"):
+	  if(ms_check(*buf, size, "set-y-pos-from-bottom")) exp->type = MSTYPESETYFB;
 	  break;
 	}
+	if(MSTYPENULL != exp->type) break;
       case '=':
 	if(ms_check(*buf, size, "=")){
 	  /* (= exp1 exp2) */
@@ -547,7 +625,7 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	  break;
 	}
       default:
-	ms_error(NULL);
+	ms_error(*buf);
 	return 0;
       }
       exp->ptr = NULL;

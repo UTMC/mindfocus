@@ -5,35 +5,123 @@
 # Makefile generated from "Imake.tmpl" and <Imakefile>
 # $TOG: Imake.tmpl /main/245 1997/05/20 10:05:47 kaleb $
 #
+#
+#
+#
+# $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.12 1999/01/09 14:18:57 dawes Exp $
+# ----------------------------------------------------------------------
 
 all::
 
 .SUFFIXES: .i
 
 # $TOG: Imake.cf /main/28 1997/06/25 08:31:36 barstow $
+# $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Exp $
 
 # -----------------------------------------------------------------------
 # site-specific configuration parameters that need to come before
 # the platform-specific parameters - edit site.def to change
 
 # site:  $XConsortium: site.def /main/revisionist/4 1996/12/31 08:02:07 kaleb $
+# site:  $XFree86: xc/config/cf/site.def,v 3.17.2.1 1997/06/22 10:32:21 dawes Exp $
+
+# $XFree86: xc/config/cf/xf86site.def,v 3.101.2.31 1999/08/02 08:37:48 hohndel Exp $
 
 # ----------------------------------------------------------------------
-# platform-specific configuration parameters - edit linux-pmac.cf to change
+# platform-specific configuration parameters - edit FreeBSD.cf to change
 
-# $XConsortium: lnxLib.rules /main/13 1996/09/28 16:11:01 rws $
+# platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
+# platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.20 1999/01/09 14:18:56 dawes Exp $
+
+# operating system:  FreeBSD 3.3-RELEASE i386 [ELF] (3.3.0)
+
+   COMPRESSMANCMD = gzip -n
+
+# $XConsortium: bsdLib.rules /main/3 1996/09/28 16:09:18 rws $
+
+# $XFree86: xc/config/cf/bsdLib.rules,v 3.4.2.7 1999/07/17 01:32:44 dawes Exp $
+
+# $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.47 1999/08/03 09:41:30 hohndel Exp $
+
+# $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
+
+LINKKITDIR = $(USRLIBDIR)/Server
+XF98LINKKITDIR = $(USRLIBDIR)/Server
+
+       XF86SRC = $(SERVERSRC)/hw/xfree86
+  XF86ACCELSRC = $(XF86SRC)/accel
+    XF86COMSRC = $(XF86SRC)/common
+ XF86CONFIGSRC = $(XF86COMSRC)
+     XF86HWSRC = $(XF86SRC)/common_hw
+     XF86OSSRC = $(XF86SRC)/os-support
+  VGADRIVERSRC = $(XF86SRC)/vga256/drivers
+VGA16DRIVERSRC = $(XF86SRC)/vga16/drivers
+ VGA2DRIVERSRC = $(XF86SRC)/vga2/drivers
+ MONODRIVERSRC = $(XF86SRC)/mono/drivers
+   S3DRIVERSRC = $(XF86SRC)/accel/s3/drivers
+  S3VDRIVERSRC = $(XF86SRC)/accel/s3_virge/drivers
+
+       XF68SRC = $(SERVERSRC)/hw/xfree68
+    XF68COMSRC = $(XF68SRC)/common
+ XF68CONFIGSRC = $(XF68COMSRC)
+     XF68OSSRC = $(XF68SRC)/os-support
+
+           XF98SRC = $(SERVERSRC)/hw/xfree98
+      XF98ACCELSRC = $(XF98SRC)/accel
+        XF98COMSRC = $(XF98SRC)/common
+     XF98CONFIGSRC = $(XF98COMSRC)
+         XF98HWSRC = $(XF98SRC)/common_hw/generic
+      XF98HWNECSRC = $(XF98SRC)/common_hw/nec
+    XF98HWPWSKBSRC = $(XF98SRC)/common_hw/pwskb
+     XF98HWPWLBSRC = $(XF98SRC)/common_hw/pwlb
+    XF98HWGA968SRC = $(XF98SRC)/common_hw/ga968
+         XF98OSSRC = $(XF98SRC)/os-support
+  XF98VGADRIVERSRC = $(XF98SRC)/vga256/drivers
+XF98VGA16DRIVERSRC = $(XF98SRC)/vga16/drivers
+ XF98VGA2DRIVERSRC = $(XF98SRC)/vga2/drivers
+ XF98MONODRIVERSRC = $(XF98SRC)/mono/drivers
+XF98NECS3DRIVERSRC = $(XF98SRC)/accel/s3nec/drivers
+XF98PWSKBDRIVERSRC = $(XF98SRC)/accel/s3pwskb/drivers
+ XF98PWLBDRIVERSRC = $(XF98SRC)/accel/s3pwlb/drivers
+XF98GA968DRIVERSRC = $(XF98SRC)/accel/s3ga968/drivers
+
+        XFREE86DOCDIR = $(DOCDIR)
+      XFREE86PSDOCDIR = $(DOCPSDIR)
+    XFREE86HTMLDOCDIR = $(DOCHTMLDIR)
+XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
+
+# $XConsortium: xf86.rules /main/9 1996/10/31 14:54:26 kaleb $
+# $XFree86: xc/config/cf/xf86.rules,v 3.16.2.2 1999/07/23 09:00:21 hohndel Exp $
 
 # ----------------------------------------------------------------------
 # site-specific configuration parameters that go after
 # the platform-specific parameters - edit site.def to change
 
 # site:  $XConsortium: site.def /main/revisionist/4 1996/12/31 08:02:07 kaleb $
+# site:  $XFree86: xc/config/cf/site.def,v 3.17.2.1 1997/06/22 10:32:21 dawes Exp $
 
 # ---------------------------------------------------------------------
 # Imake rules for building libraries, programs, scripts, and data files
-# rules:  $TOG: Imake.rules /main/220 1997/06/05 18:05:16 kaleb $
+# rules:  $TOG: Imake.rules /main/222 1997/07/17 20:04:40 kaleb $
+# rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.10 1998/11/04 10:53:01 dawes Exp $
 
  _NULLCMD_ = @ echo -n
+
+TKLIBNAME = tk80
+
+TKLIBDIR =
+
+TCLLIBNAME = tcl80
+
+TCLIBDIR =
+
+JPTKLIBNAME = tk80jp
+
+JPTKLIBDIR =
+
+JPTCLLIBNAME = tcl80jp
+
+JPTCLIBDIR =
 
           PATHSEP = /
             SHELL = /bin/sh
@@ -42,26 +130,27 @@ all::
       CURRENT_DIR = mindfocus
 
             IMAKE = imake
-           DEPEND = makedepend
+           DEPEND = gccmakedep
         MKDIRHIER = mkdir -p
     EXPORTLISTGEN =
         CONFIGSRC = $(TOP)/config
          IMAKESRC = $(CONFIGSRC)/imake
-        DEPENDSRC = $(CONFIGSRC)/makedepend
+        DEPENDSRC = $(CONFIGSRC)/util
 
           INCROOT = /usr/X11R6/include
         USRLIBDIR = /usr/X11R6/lib
+        VARLIBDIR = /var/lib
          SHLIBDIR = /usr/X11R6/lib
        LINTLIBDIR = $(USRLIBDIR)/lint
           MANPATH = /usr/X11R6/man
     MANSOURCEPATH = $(MANPATH)/man
-           MANDIR = $(MANSOURCEPATH)1
-        LIBMANDIR = $(MANSOURCEPATH)3
-       FILEMANDIR = $(MANSOURCEPATH)5
+           MANDIR = $(MANSOURCEPATH)$(MANSUFFIX)
+        LIBMANDIR = $(MANSOURCEPATH)$(LIBMANSUFFIX)
+       FILEMANDIR = $(MANSOURCEPATH)$(FILEMANSUFFIX)
 
                AR = ar clq
   BOOTSTRAPCFLAGS =
-               CC = gcc
+               CC = cc
                AS = as
 
 .SUFFIXES: .cc
@@ -73,7 +162,7 @@ all::
 CXXDEPENDINCLUDES =
  CXXEXTRA_DEFINES =
 CXXEXTRA_INCLUDES =
-   CXXSTD_DEFINES = -Dlinux -DPPC -D__powerpc__ -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -DX_LOCALE $(CXXPROJECT_DEFINES)
+   CXXSTD_DEFINES = -DCSRG_BASED $(CXXPROJECT_DEFINES)
        CXXOPTIONS =
       CXXINCLUDES = $(INCLUDES) $(TOP_INCLUDES) $(CXXEXTRA_INCLUDES)
        CXXDEFINES = $(CXXINCLUDES) $(CXXSTD_DEFINES) $(THREADS_CXXDEFINES) $(CXXEXTRA_DEFINES) $(DEFINES)
@@ -81,54 +170,57 @@ CXXEXTRA_INCLUDES =
 
          COMPRESS = compress
           GZIPCMD = gzip
-              CPP = /lib/cpp $(STD_CPP_DEFINES)
-    PREPROCESSCMD = gcc -E $(STD_CPP_DEFINES)
-          INSTALL = install
+              CPP = /usr/libexec/cpp $(STD_CPP_DEFINES)
+    PREPROCESSCMD = /usr/libexec/cpp $(STD_CPP_DEFINES)
+          INSTALL = /usr/bin/install
      INSTALLFLAGS = -c
                LD = ld
-              LEX = flex -l
-           LEXLIB = -lfl
-             YACC = byacc
-           CCYACC = byacc
+              LEX = lex
+           LEXLIB = -ll
+             YACC = yacc
+           CCYACC = yacc
              LINT = lint
       LINTLIBFLAG = -C
          LINTOPTS = -axz
                LN = ln -s
              MAKE = make
-               MV = mv
+               MV = mv -f
                CP = cp
 
            RANLIB = ranlib
   RANLIBINSTFLAGS =
 
                RM = rm -f
-        MANSUFFIX = 1x
-     LIBMANSUFFIX = 3x
-    FILEMANSUFFIX = 5x
-            TROFF = psroff
-            NROFF = nroff
+        MANSUFFIX = 1
+     LIBMANSUFFIX = 3
+    FILEMANSUFFIX = 5
+            TROFF = groff -Tps
+            NROFF = groff -Tascii
          MSMACROS = -ms
         MANMACROS = -man
               TBL = tbl
               EQN = eqn
              NEQN = neqn
               COL = col
+         COLFLAGS = -b
 
             DVIPS = dvips
             LATEX = latex
 
      STD_INCLUDES =
-  STD_CPP_DEFINES = -traditional -Dlinux -DPPC -D__powerpc__ -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -DX_LOCALE $(PROJECT_DEFINES)
-      STD_DEFINES = -Dlinux -DPPC -D__powerpc__ -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -DX_LOCALE $(PROJECT_DEFINES)
+  STD_CPP_DEFINES = -traditional $(PROJECT_DEFINES)
+      STD_DEFINES = -DCSRG_BASED $(PROJECT_DEFINES)
  EXTRA_LOAD_FLAGS = -Wl,-rpath,$(USRLIBDIRPATH)
   EXTRA_LDOPTIONS =
-  EXTRA_LIBRARIES =
+  EXTRA_LIBRARIES =  -lxpg4
              TAGS = ctags
+
+   PARALLELMFLAGS =
 
     SHAREDCODEDEF =
          SHLIBDEF =
 
-     SHLIBLDFLAGS = -shared
+     SHLIBLDFLAGS = -shared -rpath $(USRLIBDIRPATH)
 
          PICFLAGS = -fPIC
 
@@ -139,17 +231,17 @@ CXXEXTRA_INCLUDES =
      INSTPGMFLAGS = -s
 
      INSTBINFLAGS = -m 0755
-     INSTUIDFLAGS = -s -m 4711
+     INSTUIDFLAGS = -m 4711
      INSTLIBFLAGS = -m 0644
      INSTINCFLAGS = -m 0444
      INSTMANFLAGS = -m 0444
      INSTDATFLAGS = -m 0444
-    INSTKMEMFLAGS = -s -m 4711
+    INSTKMEMFLAGS = -g kmem -m 2755
 
       PROJECTROOT = /usr/X11R6
 
       CDEBUGFLAGS = -O2
-        CCOPTIONS = -fsigned-char
+        CCOPTIONS =
 
       ALLINCLUDES = $(INCLUDES) $(EXTRA_INCLUDES) $(TOP_INCLUDES) $(STD_INCLUDES)
        ALLDEFINES = $(ALLINCLUDES) $(STD_DEFINES) $(EXTRA_DEFINES) $(PROTO_DEFINES) $(THREADS_DEFINES) $(DEFINES)
@@ -167,10 +259,28 @@ CXXEXTRA_INCLUDES =
           CXXLINK = $(CXX)
 
      LDSTRIPFLAGS = -x
-   LDCOMBINEFLAGS = -r
+   LDCOMBINEFLAGS = -X -r
       DEPENDFLAGS =
 
-        MACROFILE = linux-pmac.cf
+# Not sure this belongs here
+         TKLIBDIR =
+         TKINCDIR = /usr/local/include/tk8.0
+        TKLIBNAME = tk80
+        TKLIBRARY = -L$(TKLIBDIR) -l$(TKLIBNAME)
+        TCLLIBDIR =
+        TCLINCDIR = /usr/local/include/tcl8.0
+       TCLLIBNAME = tcl80
+       TCLLIBRARY = -L$(TCLLIBDIR) -l$(TCLLIBNAME)
+       JPTKLIBDIR =
+       JPTKINCDIR = /usr/local/include/tk8.0jp
+      JPTKLIBNAME = tk80jp
+      JPTKLIBRARY = -L$(JPTKLIBDIR) -l$(JPTKLIBNAME)
+      JPTCLLIBDIR =
+      JPTCLINCDIR = /usr/local/include/tcl8.0jp
+     JPTCLLIBNAME = tcl80jp
+     JPTCLLIBRARY = -L$(JPTCLLIBDIR) -l$(JPTCLLIBNAME)
+
+        MACROFILE = FreeBSD.cf
            RM_CMD = $(RM)
 
     IMAKE_DEFINES =
@@ -178,13 +288,24 @@ CXXEXTRA_INCLUDES =
          IRULESRC = $(CONFIGDIR)
         IMAKE_CMD = $(IMAKE) -DUseInstalled -I$(IRULESRC) $(IMAKE_DEFINES)
 
-     ICONFIGFILES = $(IRULESRC)/Imake.tmpl $(IRULESRC)/X11.tmpl 			$(IRULESRC)/site.def $(IRULESRC)/$(MACROFILE) 			 $(EXTRA_ICONFIGFILES)
+     ICONFIGFILES = $(IRULESRC)/Imake.tmpl $(IRULESRC)/X11.tmpl 			$(IRULESRC)/site.def $(IRULESRC)/$(MACROFILE) 			$(IRULESRC)/xfree86.cf $(IRULESRC)/xf86.rules $(IRULESRC)/xf86site.def $(IRULESRC)/host.def $(EXTRA_ICONFIGFILES)
 
 # $TOG: X11.rules /main/4 1997/04/30 15:23:24 kaleb $
+#
+#
+#
+# $XFree86: xc/config/cf/X11.rules,v 1.1.1.1.2.4 1999/04/21 07:20:58 hohndel Exp $
 
 # ----------------------------------------------------------------------
 # X Window System Build Parameters and Rules
 # $TOG: X11.tmpl /main/292 1997/05/20 10:05:59 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.9 1998/12/30 10:04:09 dawes Exp $
+
+CONNECTION_FLAGS = -DTCPCONN -DUNIXCONN -DHAS_STICKY_DIR_BIT
 
 # -----------------------------------------------------------------------
 # X Window System make variables; these need to be coordinated with rules
@@ -205,11 +326,17 @@ CXXEXTRA_INCLUDES =
            INCDIR = $(INCROOT)
            ADMDIR = /usr/adm
            LIBDIR = $(USRLIBDIR)/X11
-   TOP_X_INCLUDES = -I$(XPROJECTROOT)/include
+   TOP_X_INCLUDES =
 
+           VARDIR = /var/X11
+
+           DOCDIR = $(LIBDIR)/doc
+       DOCHTMLDIR = $(DOCDIR)/html
+         DOCPSDIR = $(DOCDIR)/PostScript
           FONTDIR = $(LIBDIR)/fonts
          XINITDIR = $(LIBDIR)/xinit
            XDMDIR = $(LIBDIR)/xdm
+        XDMVARDIR = $(VARLIBDIR)/xdm
            TWMDIR = $(LIBDIR)/twm
            XSMDIR = $(LIBDIR)/xsm
            NLSDIR = $(LIBDIR)/nls
@@ -228,6 +355,8 @@ CXXEXTRA_INCLUDES =
         MKFONTDIR = mkfontdir
 
        DOCUTILSRC = $(XTOP)/doc/util
+        CLIENTSRC = $(TOP)/clients
+          DEMOSRC = $(TOP)/demos
        XDOCMACROS = $(DOCUTILSRC)/macros.t
        XIDXMACROS = $(DOCUTILSRC)/indexmacros.t
        PROGRAMSRC = $(TOP)/programs
@@ -248,9 +377,11 @@ CXXEXTRA_INCLUDES =
      TRANSCOMMSRC = $(LIBSRC)/xtrans
    TRANS_INCLUDES = -I$(TRANSCOMMSRC)
 
-   CLIENTENVSETUP =
+       XENVLIBDIR = $(USRLIBDIR)
+   CLIENTENVSETUP = LD_LIBRARY_PATH=$(XENVLIBDIR)
 
-# $XConsortium: lnxLib.tmpl,v 1.5 95/01/11 21:44:44 kaleb Exp $
+# $XConsortium: bsdLib.tmpl /main/3 1996/09/28 16:09:25 rws $
+# $XFree86: xc/config/cf/bsdLib.tmpl,v 3.3.2.2 1998/11/06 13:54:16 dawes Exp $
 
           XLIBSRC = $(LIBSRC)/X11
 
@@ -274,6 +405,41 @@ LINTEXTENSIONLIB = $(LINTEXTENSION)
           DEPXLIB = $(DEPEXTENSIONLIB) $(DEPXONLYLIB)
              XLIB = $(EXTENSIONLIB) $(XONLYLIB)
          LINTXLIB = $(LINTXONLYLIB)
+
+    XSSLIBSRC = $(LIBSRC)/Xss
+
+DEPXSSLIB = $(USRLIBDIR)/libXss.a
+XSSLIB =  -lXss
+
+LINTXSS = $(LINTLIBDIR)/llib-lXss.ln
+
+    XXF86MISCLIBSRC = $(LIBSRC)/Xxf86misc
+
+DEPXXF86MISCLIB = $(USRLIBDIR)/libXxf86misc.a
+XXF86MISCLIB =  -lXxf86misc
+
+LINTXXF86MISC = $(LINTLIBDIR)/llib-lXxf86misc.ln
+
+    XXF86VMLIBSRC = $(LIBSRC)/Xxf86vm
+
+DEPXXF86VMLIB = $(USRLIBDIR)/libXxf86vm.a
+XXF86VMLIB =  -lXxf86vm
+
+LINTXXF86VM = $(LINTLIBDIR)/llib-lXxf86vm.ln
+
+    XXF86DGALIBSRC = $(LIBSRC)/Xxf86dga
+
+DEPXXF86DGALIB = $(USRLIBDIR)/libXxf86dga.a
+XXF86DGALIB =  -lXxf86dga
+
+LINTXXF86DGA = $(LINTLIBDIR)/llib-lXxf86dga.ln
+
+    XDPMSLIBSRC = $(LIBSRC)/Xdpms
+
+DEPXDPMSLIB = $(USRLIBDIR)/libXdpms.a
+XDPMSLIB =  -lXdpms
+
+LINTXDPMS = $(LINTLIBDIR)/llib-lXdpms.ln
 
          XAUTHSRC = $(LIBSRC)/Xau
 
@@ -299,7 +465,8 @@ LINTXMU = $(LINTLIBDIR)/llib-lXmu.ln
 
        OLDXLIBSRC = $(LIBSRC)/oldX
 
-DEPOLDXLIB = $(USRLIBDIR)/liboldX.a
+SOOLDXREV = 6.0
+DEPOLDXLIB =
 OLDXLIB =  -loldX
 
 LINTOLDX = $(LINTLIBDIR)/llib-loldX.ln
@@ -422,6 +589,13 @@ FONTLIB =  -lfont
 
 LINTFONT = $(LINTLIBDIR)/llib-lfont.ln
 
+          XPMLIBSRC = $(LIBSRC)/Xpm
+
+DEPXPMLIB = $(USRLIBDIR)/libXpm.a
+XPMLIB =  -lXpm
+
+LINTXPM = $(LINTLIBDIR)/llib-lXpm.ln
+
     XKBFILELIBSRC = $(LIBSRC)/xkbfile
 
 DEPXKBFILELIB = $(USRLIBDIR)/libxkbfile.a
@@ -430,6 +604,13 @@ XKBFILELIB =  -lxkbfile
 LINTXKBFILE = $(LINTLIBDIR)/llib-lxkbfile.ln
 
      XKBCOMPCMD = xkbcomp
+
+    XKBUILIBSRC = $(LIBSRC)/xkbui
+
+DEPXKBUILIB = $(USRLIBDIR)/libxkbui.a
+XKBUILIB =  -lxkbui
+
+LINTXKBUI = $(LINTLIBDIR)/llib-lxkbui.ln
 
           DEPLIBS = $(DEPXAWLIB) $(DEPXMULIB) $(DEPXTOOLLIB) $(DEPXLIB)
 
@@ -491,10 +672,16 @@ install:: mindfocus
 install.man:: mindfocus.man
 	@if [ -d $(DESTDIR)$(MANDIR) ]; then set +x; \
 	else (set -x; $(MKDIRHIER) $(DESTDIR)$(MANDIR)); fi
-	$(INSTALL) $(INSTALLFLAGS) $(INSTMANFLAGS) mindfocus.man $(DESTDIR)$(MANDIR)/mindfocus.$(MANSUFFIX)
+	$(RM) $(DESTDIR)$(MANDIR)/mindfocus.$(MANSUFFIX)*
+	$(INSTALL) -c $(INSTMANFLAGS) mindfocus.man \
+	$(DESTDIR)$(MANDIR)/mindfocus.$(MANSUFFIX)
+	-$(COMPRESSMANCMD) $(DESTDIR)$(MANDIR)/mindfocus.$(MANSUFFIX)
 
-depend::
-	$(DEPEND) $(DEPENDFLAGS) -- $(ALLDEFINES) $(DEPEND_DEFINES) -- $(SRCS)
+depend:: .depend
+
+.depend::
+	$(RM) $@
+	$(DEPEND) -f- $(DEPENDFLAGS) -- $(ALLDEFINES) $(DEPEND_DEFINES) -- $(SRCS) > $@
 
 lint:
 	$(LINT) $(LINTFLAGS) $(SRCS) $(LINTLIBS)
@@ -522,7 +709,7 @@ mfc.o:: ../lib/grplib/grplib.h mfc.h
 emptyrule::
 
 clean::
-	$(RM) *.CKP *.ln *.BAK *.bak *.o core errs ,* *~ *.a .emacs_* tags TAGS make.log MakeOut  "#"*
+	$(RM) *.CKP *.ln *.BAK *.bak *.o core errs ,* *~ *.a .emacs_* tags TAGS make.log MakeOut *.core "#"*
 
 Makefile::
 	-@if [ -f Makefile ]; then set -x; \
@@ -556,4 +743,6 @@ depend::
 
 # ----------------------------------------------------------------------
 # dependencies generated by makedepend
+
+# dependencies are in .depend
 
