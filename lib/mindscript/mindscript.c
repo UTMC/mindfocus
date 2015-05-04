@@ -3,12 +3,15 @@
 #include <string.h>
 #include <unistd.h>
 #include "../../configure.h"
+#include "../../mindfocus/mindfocus.h"
 #include "mindscript.h"
 
 #ifdef DEBUG
 static char* types[] = {
   "<number>", "<symbol>", "begin", "cond", "setq", "rand", "equal",
-    "chg-grp", "main", "define", "pair", "plus",
+    "chg-grp", "main", "define", "pair", "plus", "minus", "and", "or",
+      "greater than", "less than", "greater or equal", "less or equal",
+	"get-pos-by-per", "set-pos-by-per",
 };
 #endif /* DEBUG */
 
@@ -66,10 +69,7 @@ ms_exec(MSWORKEXP* exp)
       = ms_exec(((MSWORKSETQ*)exp->ptr)->exp);
     break;
   case MSTYPERAND:
-    return (int)(ms_exec(((MSWORKRAND*)exp->ptr)->exp) * (double)(rand()) / RAND_MAX);
-  case MSTYPEEQUAL:
-    return (ms_exec(((MSWORKEQUAL*)exp->ptr)->exp1) ==
-	    (ms_exec(((MSWORKEQUAL*)exp->ptr)->exp2)));
+    return (int)((double)ms_exec(((MSWORKRAND*)exp->ptr)->exp) * (double)rand() / (((double)RAND_MAX)+1));
   case MSTYPECHGGRP:
     c = ms_exec(((MSWORKCHGGRP*)exp->ptr)->exp);
 #ifdef DEBUG
@@ -77,10 +77,39 @@ ms_exec(MSWORKEXP* exp)
 #endif /* DEBUG */
     chg_grp(c);
     break;
+  case MSTYPEGETPBP:
+    return get_pos_by_per();
+  case MSTYPESETPBP:
+    c = ms_exec(((MSWORKSETPBP*)exp->ptr)->exp);
+    set_pos_by_per(c);
+    break;
+  case MSTYPEEQUAL:
+    return (ms_exec(((MSWORKEQUAL*)exp->ptr)->exp1) ==
+	    (ms_exec(((MSWORKEQUAL*)exp->ptr)->exp2)));
   case MSTYPEPLUS:
     return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) +
 	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
-    break;
+  case MSTYPEMINUS:
+    return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) -
+	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
+  case MSTYPEAND:
+    return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) &
+	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
+  case MSTYPEOR:
+    return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) |
+	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
+  case MSTYPEGT:
+    return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) >
+	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
+  case MSTYPELT:
+    return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) <
+	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
+  case MSTYPEGE:
+    return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) >=
+	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
+  case MSTYPELE:
+    return (ms_exec(((MSWORKPLUS*)exp->ptr)->exp1) <=
+	    (ms_exec(((MSWORKPLUS*)exp->ptr)->exp2)));
   }
   return 0;
 }
@@ -251,23 +280,6 @@ ms_makestruct(int stack)
     buf[0]->ptr = malloc(sizeof(MSWORKRAND));
     ((MSWORKRAND*)buf[0]->ptr)->exp = buf[1];
     break;
-  case MSTYPEEQUAL:
-    if(stack != 3){
-      ms_error(NULL);
-      return 0;
-    }
-    buf[0]->ptr = malloc(sizeof(MSWORKEQUAL));
-    ((MSWORKEQUAL*)buf[0]->ptr)->exp1 = buf[1];
-    ((MSWORKEQUAL*)buf[0]->ptr)->exp2 = buf[2];
-    break;
-  case MSTYPECHGGRP:
-    if(stack != 2){
-      ms_error(NULL);
-      return 0;
-    }
-    buf[0]->ptr = malloc(sizeof(MSWORKCHGGRP));
-    ((MSWORKCHGGRP*)buf[0]->ptr)->exp = buf[1];
-    break;
   case MSTYPEMAIN:
     if(stack != 3){
       ms_error(NULL);
@@ -295,7 +307,39 @@ ms_makestruct(int stack)
     ((MSWORKNUMBER*)buf[0]->ptr)->number = 0;
     buf[0]->type = MSTYPENUMBER;
     break;
+  case MSTYPECHGGRP:
+    if(stack != 2){
+      ms_error(NULL);
+      return 0;
+    }
+    buf[0]->ptr = malloc(sizeof(MSWORKCHGGRP));
+    ((MSWORKCHGGRP*)buf[0]->ptr)->exp = buf[1];
+    break;
+  case MSTYPESETPBP:
+    if(stack != 2){
+      ms_error(NULL);
+      return 0;
+    }
+    buf[0]->ptr = malloc(sizeof(MSWORKSETPBP));
+    ((MSWORKSETPBP*)buf[0]->ptr)->exp = buf[1];
+    break;
+  case MSTYPEGETPBP:
+    if(stack != 1){
+      ms_error(NULL);
+      return 0;
+    }
+    buf[0]->ptr = NULL;
+    break;
   case MSTYPEPAIR:
+  case MSTYPEEQUAL:
+  case MSTYPEPLUS:
+  case MSTYPEMINUS:
+  case MSTYPEAND:
+  case MSTYPEOR:
+  case MSTYPEGT:
+  case MSTYPELT:
+  case MSTYPEGE:
+  case MSTYPELE:
     if(stack != 3){
       ms_error(NULL);
       return 0;
@@ -303,15 +347,6 @@ ms_makestruct(int stack)
     buf[0]->ptr = malloc(sizeof(MSWORKPAIR));
     ((MSWORKPAIR*)buf[0]->ptr)->exp1 = buf[1];
     ((MSWORKPAIR*)buf[0]->ptr)->exp2 = buf[2];
-    break;
-  case MSTYPEPLUS:
-    if(stack != 3){
-      ms_error(NULL);
-      return 0;
-    }
-    buf[0]->ptr = malloc(sizeof(MSWORKPLUS));
-    ((MSWORKPLUS*)buf[0]->ptr)->exp1 = buf[1];
-    ((MSWORKPLUS*)buf[0]->ptr)->exp2 = buf[2];
     break;
   case MSTYPENUMBER:
   case MSTYPESYMBOL:
@@ -417,6 +452,12 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	  exp->type = MSTYPEMAIN;
 	  break;
 	}
+      case 'a':
+	if(ms_check(*buf, size, "and")){
+	  /* (and exp1 exp2) */
+	  exp->type = MSTYPEAND;
+	  break;
+	}
       case 'b':
 	if(ms_check(*buf, size, "begin")){
 	  /* (begin a1 a2 ... an) */
@@ -439,16 +480,32 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	  exp->type = MSTYPEDEFINE;
 	  break;
 	}
-      case 's':
-	if(ms_check(*buf, size, "setq")){
-	  /* (setq var n) */
-	  exp->type = MSTYPESETQ;
+      case 'g':
+	if(ms_check(*buf, size, "get-pos-by-per")){
+	  /* (get-pos-by-per) */
+	  exp->type = MSTYPEGETPBP;
+	  break;
+	}
+      case 'o':
+	if(ms_check(*buf, size, "or")){
+	  /* (or exp1 exp2) */
+	  exp->type = MSTYPEOR;
 	  break;
 	}
       case 'r':
 	if(ms_check(*buf, size, "rand")){
 	  /* (rand n) */
 	  exp->type = MSTYPERAND;
+	  break;
+	}
+      case 's':
+	if(ms_check(*buf, size, "setq")){
+	  /* (setq var n) */
+	  exp->type = MSTYPESETQ;
+	  break;
+	}else if(ms_check(*buf, size, "set-pos-by-per")){
+	  /* (set-pos-by-per pos) */
+	  exp->type = MSTYPESETPBP;
 	  break;
 	}
       case '=':
@@ -459,8 +516,34 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	}
       case '+':
 	if(ms_check(*buf, size, "+")){
-	  /* (= exp1 exp2) */
+	  /* (+ exp1 exp2) */
 	  exp->type = MSTYPEPLUS;
+	  break;
+	}
+      case '-':
+	if(ms_check(*buf, size, "-")){
+	  /* (- exp1 exp2) */
+	  exp->type = MSTYPEMINUS;
+	  break;
+	}
+      case '>':
+	if(ms_check(*buf, size, ">")){
+	  /* (> exp1 exp2) */
+	  exp->type = MSTYPEGT;
+	  break;
+	}else if(ms_check(*buf, size, ">=")){
+	  /* (>= exp1 exp2) */
+	  exp->type = MSTYPEGE;
+	  break;
+	}
+      case '<':
+	if(ms_check(*buf, size, "<")){
+	  /* (< exp1 exp2) */
+	  exp->type = MSTYPELT;
+	  break;
+	}else if(ms_check(*buf, size, "<=")){
+	  /* (<= exp1 exp2) */
+	  exp->type = MSTYPELE;
 	  break;
 	}
       default:
@@ -582,7 +665,7 @@ int
 ms_init(const char* src)
 {
   FILE* fp;
-  fpos_t size;
+  long size;
   char* buf;
 
   if(NULL == src){
@@ -597,7 +680,7 @@ ms_init(const char* src)
   }
 
   fseek(fp, 0, SEEK_END);
-  fgetpos(fp, &size);
+  size = ftell(fp);
   rewind(fp);
 
   buf = alloca(size + 1);

@@ -42,13 +42,26 @@
  */
 
 /* for SunOS */
+/* SunOSで使用する際は定義して下さい。 */
 /*#define SUNOS*/
 
 /* アニメーション処理をするかどうか */
+/* 管理がずさんなので定義しないとコンパイルが通らない？ */
 #define ANIMATION
 
 /* ヴァージョン情報 */
-#define VERSION 0.80
+#define VERSION 0.85
 
 /* デバッグフラグ */
+/* 各種デバッグメッセージを表示するようになる */
 /*#define DEBUG*/
+
+/*
+ *
+ * ここから先は編集しないで下さい。
+ *
+ */
+
+#ifdef SUNOS
+#define RAND_MAX 65535
+#endif /* SUNOS */

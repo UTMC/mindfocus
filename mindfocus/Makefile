@@ -505,9 +505,9 @@ clean::
 	$(RM) mindfocus
 
 install:: ../system.mindfocus
-	@if [ -d $(DESTDIR) ${HOME}/share/mindfocus ]; then set +x; \
-	else (set -x; $(MKDIRHIER) $(DESTDIR) ${HOME}/share/mindfocus); fi
-	$(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) ../system.mindfocus $(DESTDIR) ${HOME}/share/mindfocus/system.mindfocus
+	@if [ -d $(DESTDIR)${HOME}/share/mindfocus ]; then set +x; \
+	else (set -x; $(MKDIRHIER) $(DESTDIR)${HOME}/share/mindfocus); fi
+	$(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) ../system.mindfocus $(DESTDIR)${HOME}/share/mindfocus/system.mindfocus
 
 mindfocus.o:: ../lib/inifile/inifile.h mfc.h
 mfc.o:: ../lib/grplib/grplib.h mfc.h

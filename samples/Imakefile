@@ -20,3 +20,4 @@ InstallNamedNonExec(pixmaps/nanase1.xpm,nanase1.xpm,DATADIR/pixmaps)
 InstallNamedNonExec(pixmaps/nanase2.xpm,nanase2.xpm,DATADIR/pixmaps)
 InstallNamedNonExec(pixmaps/nanase3.xpm,nanase3.xpm,DATADIR/pixmaps)
 
+AllTarget()

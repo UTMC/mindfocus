@@ -540,6 +540,8 @@ install:: pixmaps/nanase3.xpm
 	else (set -x; $(MKDIRHIER) $(DESTDIR)${HOME}/share/mindfocus/pixmaps); fi
 	$(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) pixmaps/nanase3.xpm $(DESTDIR)${HOME}/share/mindfocus/pixmaps/nanase3.xpm
 
+all::
+
 # ----------------------------------------------------------------------
 # common rules for all Makefiles - do not edit
 

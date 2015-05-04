@@ -12,22 +12,21 @@
 #include "../lib/inifile/inifile.h"
 #include "../lib/mindscript/mindscript.h"
 #include "./mfc.h"
+#include "./mindfocus.h"
 
 #define METHOD_PLUS  0
 #define METHOD_MINUS 1
 #define METHOD_PER   2
 
-#define MF_MASK (FocusChangeMask|StructureNotifyMask|SubstructureNotifyMask)
+#define PIPE_DISPLAY 'D'
+#define PIPE_MOVE    'M'
 
-#ifdef SUNOS
-#ifndef RAND_MAX
-#define RAND_MAX 65535
-#endif /* RAND_MAX */
-#endif /* SUNOS */
+#define MF_MASK (FocusChangeMask|StructureNotifyMask|SubstructureNotifyMask)
 
 static Display* d;
 static Window w;
 static MFC* mfc;
+static POSITION winpos;
 
 static XWindowChanges values;
 static XSetWindowAttributes attr;
@@ -44,8 +43,83 @@ static int height;
 static int revert;
 static int xfd;
 static int anime_pipe[2];
+static XEvent retry_event;
 
-/*int _Xdebug = 1;*/
+int _Xdebug = 1;
+
+#if 0
+int
+xerr(Display* d, XErrorEvent* e)
+{
+  char message[1024];
+
+  return _XError(d, e);
+/*
+  if(e->resourceid == w){
+    fprintf(stderr, "mindfocus: X protocol error\n\t%d, %d, %d, %d, %d, %d\n",
+	    e->type, e->display, e->resourceid, e->serial,
+	    e->error_code, e->request_code, e->minor_code);
+  }
+  return 0;
+*/
+}
+#endif
+
+void
+calcpos(int* x, int* y, POSITION* pos)
+{
+  if(pos->win_w == 0){
+    *x = *y = 0;
+    return;
+  }
+
+  switch(pos->method){
+  case METHOD_PLUS:
+    pos->from_left = pos->param;
+    pos->from_right = pos->win_w - pos->from_left;
+    pos->percent = pos->from_left * 100 / pos->win_w;
+    break;
+  case METHOD_MINUS:
+    pos->from_right = pos->param;
+    pos->from_left = pos->win_w - pos->from_right;
+    pos->percent = pos->from_left * 100 / pos->win_w;
+    break;
+  case METHOD_PER:
+    pos->percent = pos->param;
+    pos->from_left = (int)((double)(pos->win_w * pos->param) / 100);
+    pos->from_right = pos->win_w - pos->from_left;
+    break;
+  }
+  *x = pos->win_x + pos->from_left;
+  *y = pos->win_y;
+}
+
+void
+set_pos_by_per(int pos)
+{
+  static char command = PIPE_MOVE;
+  int x, y;
+
+  winpos.param = pos;
+  winpos.method = METHOD_PER;
+  calcpos(&x, &y, &winpos);
+  write(anime_pipe[1], &command, 1);
+}
+
+int
+get_pos_by_per()
+{
+  return winpos.percent;
+}
+
+void
+chg_grp(int num)
+{
+  static char command = PIPE_DISPLAY;
+
+  mfc->current = num;
+  write(anime_pipe[1], &command, 1);
+}
 
 void
 disp_grp()
@@ -55,15 +129,6 @@ disp_grp()
   XShapeCombineMask(d, w, 0, 0, 0, mfc->shapes[mfc->current], 0);
   XClearWindow(d, w);
   XFlush(d);
-}
-
-void
-chg_grp(int num)
-{
-  char dumy;
-
-  mfc->current = num;
-  write(anime_pipe[1], &dumy, 1);
 }
 
 void
@@ -90,31 +155,15 @@ help(int exitcode)
   exit(exitcode);
 }
 
-#if 0
-int
-xerr(Display* d, XErrorEvent* e)
-{
-  char message[1024];
-
-  return _XError(d, e);
-/*
-  if(e->resourceid == w){
-    fprintf(stderr, "mindfocus: X protocol error\n\t%d, %d, %d, %d, %d, %d\n",
-	    e->type, e->display, e->resourceid, e->serial,
-	    e->error_code, e->request_code, e->minor_code);
-  }
-  return 0;
-*/
-}
-#endif
-
 void
 animefunc(int code)
 {
   struct itimerval timer;
+  int wait;
 
-  timer.it_value.tv_sec = 0;
-  timer.it_value.tv_usec = 1000 * ms_run();
+  wait = ms_run();
+  timer.it_value.tv_sec = wait / 1000;
+  timer.it_value.tv_usec = 1000 * (wait % 1000);
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = 0;
   setitimer(ITIMER_REAL, &timer, NULL);
@@ -128,6 +177,10 @@ stackctl(Window win, int stack, int title)
 
   if(stack){
     /* stack control */
+    if(win == 1){
+      /* invalid window */
+      return 0;
+    }
     focus = win;
     if(title){
       XQueryTree(d, win, &root, &parent, &children, &nchildren);
@@ -152,7 +205,7 @@ stackctl(Window win, int stack, int title)
 }
 
 void
-getpos(int title, int* x, int* y, int pos, int method, Window* win)
+getpos(int title, int* x, int* y, POSITION* pos, Window* win)
 {
   int rx;
   int ry;
@@ -161,8 +214,26 @@ getpos(int title, int* x, int* y, int pos, int method, Window* win)
   int mask;
 
   /* check focus window */
-  for(XGetInputFocus(d, &focus, &revert); focus == 1; sleep(1))
+#ifndef OLD_METHOD
+  XGetInputFocus(d, &focus, &revert);
+  if(focus == 1){
+    /* invalid window */
+    pos->win_w = 0;
+    *win = focus;
+    XSendEvent(d, w, True, 0, &retry_event);
+    calcpos(x, y, pos);
+    return;
+  }else if(focus == RootWindow(d, 0)){
+    /* root window */
+    XGetGeometry(d, *win, &root, &pos->win_x, &pos->win_y,
+		 &pos->win_w, &height, &border, &depth);
+    calcpos(x, y, pos);
+    return;
+  }
+#else /* OLD_METHOD */
+  for(XGetInputFocus(d, &focus, &revert); focus == 1;)
     XGetInputFocus(d, &focus, &revert);
+#endif /* OLD_METHOD */
 
   if(title){
     /* TITLE = <num> */
@@ -174,11 +245,22 @@ getpos(int title, int* x, int* y, int pos, int method, Window* win)
     *y = ry - wy - title;
   }else{
     /* TITLE = Auto */
+#ifndef OLD_METHOD
+
+    XQueryTree(d, focus, &root, &parent, &children, &nchildren);
+    for(;parent != root;){
+      focus = parent;
+      XQueryTree(d, focus, &root, &parent, &children, &nchildren);
+    }
+    XGetGeometry(d, focus, &root, x, y, &width, &height, &border, &depth);
+    XSelectInput(d, focus, MF_MASK);
+
+#else /* OLD_METHOD */
     XQueryTree(d, focus, &root, &parent, &children, &nchildren);
     if(focus == root){
       XQueryTree(d, *win, &root, &parent, &children, &nchildren);
       if(focus == root)
-	focus = *win;
+        focus = *win;
       XGetGeometry(d, focus, &root, x, y, &width, &height, &border, &depth);
       XSelectInput(d, root, MF_MASK);
       XSelectInput(d, focus, MF_MASK);
@@ -198,19 +280,15 @@ getpos(int title, int* x, int* y, int pos, int method, Window* win)
       printf("focus win:%x\n", focus);
 #endif /* DEBUG */
     }
+
+#endif /* OLD_METHOD */
   }
-  switch(method){
-  case METHOD_PLUS:
-    *x += pos;
-    break;
-  case METHOD_MINUS:
-    *x += width - pos;
-    break;
-  case METHOD_PER:
-    *x += (int)((double)(width * pos) / 100);
-    break;
-  }
+
   *win = focus;
+  pos->win_x = *x;
+  pos->win_y = *y;
+  pos->win_w = width;
+  calcpos(x, y, pos);
 }
 
 void
@@ -220,18 +298,16 @@ mainloop(INIFILE* ini, const char* position)
   const char* ptr;
   int ox;
   int oy;
-  int x;
-  int y;
   int tx;
   int ty;
-  int pos;
-  int method;
+  int x;
+  int y;
   char* p;
   int stack;
   XEvent event;
   Window win;
   fd_set in_set;
-  char dumy;
+  char command;
   int fd_max;
   struct itimerval timer;
   struct sigaction sig;
@@ -249,25 +325,34 @@ mainloop(INIFILE* ini, const char* position)
     ptr = ini_getstr(ini, "POS");
   if(ptr){
     if(*ptr == '-'){
-      pos = atoi(&ptr[1]);
-      method = METHOD_MINUS;
+      winpos.param = atoi(&ptr[1]);
+      winpos.method = METHOD_MINUS;
     }else if(*ptr == '+'){
-      pos = atoi(&ptr[1]);
-      method = METHOD_PLUS;
+      winpos.param = atoi(&ptr[1]);
+      winpos.method = METHOD_PLUS;
     }else{
-      pos = atoi(ptr);
+      winpos.param = atoi(ptr);
       for(p = (char *)ptr; ('0' <= *p) && (*p <= '9'); p++);
       if(*p == '%')
-	method = METHOD_PER;
+	winpos.method = METHOD_PER;
       else
-	method = METHOD_PLUS;
+	winpos.method = METHOD_PLUS;
     }
   }else{
-    pos = 80;
-    method = METHOD_PER;
+    winpos.param = 80;
+    winpos.method = METHOD_PER;
   }
+  winpos.win_x = 0;
+  winpos.win_y = 0;
+  winpos.win_w = 0;
 
-  getpos(title, &x, &y, pos, method, &win);
+  xfd = ConnectionNumber(d);
+  pipe(anime_pipe);
+  fd_max = (anime_pipe[0] > xfd)? anime_pipe[0]+1: xfd+1;
+
+  for(XGetInputFocus(d, &focus, &revert); focus == 1;)
+    XGetInputFocus(d, &focus, &revert);
+  getpos(title, &x, &y, &winpos, &win);
 
   if((x > 0) || (y > 0)){
     values.x = x - mfc->cx;
@@ -277,11 +362,7 @@ mainloop(INIFILE* ini, const char* position)
     XFlush(d);
   }
 
-  xfd = ConnectionNumber(d);
-  pipe(anime_pipe);
-  fd_max = (anime_pipe[0] > xfd)? anime_pipe[0]+1: xfd+1;
-
-  srand(pos+time(NULL));
+  srand(winpos.param+time(NULL));
   bzero(&sig, sizeof(struct sigaction));
   sig.sa_handler = animefunc;
   sigaction(SIGALRM, &sig, NULL);
@@ -295,49 +376,64 @@ mainloop(INIFILE* ini, const char* position)
     FD_SET(anime_pipe[0], &in_set);
     if(0 >= select(fd_max, &in_set, NULL, NULL, NULL))
       continue;
+    /* mindfocus message is comming */
     if(FD_ISSET(anime_pipe[0], &in_set)){
-      read(anime_pipe[0], &dumy, 1);
-      disp_grp();
+      /* check command type */
+      read(anime_pipe[0], &command, 1);
+      switch(command){
+      case PIPE_DISPLAY:
+	/* redraw */
+	disp_grp();
+	break;
+      case PIPE_MOVE:
+	/* move */
+	getpos(title, &x, &y, &winpos, &win);
+	/* calcpos(&x, &y, &winpos);*/
+	values.x = x - mfc->cx;
+	values.y = y - mfc->cy;
+	XConfigureWindow(d, w, CWX|CWY, &values);
+	break;
+      }
     }
+
+    /* xevent? */
     if(!FD_ISSET(xfd, &in_set)){
       continue;
     }
+
+    /* check event queue */
     if(!XEventsQueued(d, QueuedAfterFlush))
       continue;
     XNextEvent(d, &event);
     switch(event.type){
     case FocusOut:
+    case FocusIn:
+    case ConfigureNotify:
+      break;
     case ButtonPress:
+/*
+      if(event.xany.window != w)
+	continue;
+*/
       break;
     default:
       continue;
     }
 
-/*
-    if((event.xany.window != w) && (event.type == FocusOut))
-      XSelectInput(d, event.xany.window, NoEventMask);
-*/
-
-#ifdef DEBUG
-      printf("win:%x, event:%d\n", event.xany.window, event.type);
-#endif /* DEBUG */
-
     ox = x;
     oy = y;
-    getpos(title, &x, &y, pos, method, &win);
+    getpos(title, &x, &y, &winpos, &win);
 
     if((ox == x) && (oy == y)){
       stackctl(win, stack, title);
       continue;
     }
 
-    XUnmapWindow(d, w);
     if((x > 0) || (y > 0)){
       values.x = x - mfc->cx;
       values.y = y - mfc->cy;
       XConfigureWindow(d, w, CWX|CWY, &values);
       if(stackctl(win, stack, title)){
-	XMapWindow(d, w);
 	XFlush(d);
       }
     }
@@ -422,9 +518,9 @@ main(int argc, char** argv)
     help(3);
   }
 
-  /* set X error handler */
 #if 0
-    XSetErrorHandler(xerr);
+  /* set X error handler */
+  XSetErrorHandler(xerr);
 #endif
 
   /* connect */
@@ -523,6 +619,8 @@ main(int argc, char** argv)
   values.width = mfc->width;
   values.height = mfc->height;
   XConfigureWindow(d, w, CWWidth|CWHeight, &values);
+
+  retry_event.type = FocusOut;
 
   /* main loop */
   mainloop(dotfile, position);

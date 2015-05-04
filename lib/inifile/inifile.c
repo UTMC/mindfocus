@@ -116,11 +116,7 @@ INIFILE*
 ini_open(const char* filename)
 {
   FILE* fp;
-#ifdef SUNOS
   long size;
-#else /* not SUNOS */
-  fpos_t size;
-#endif /* SUNOS */
   char* buf;
   const char* ptr1;
   const char* ptr2;
@@ -133,11 +129,7 @@ ini_open(const char* filename)
     return NULL;
 
   fseek(fp, 0, SEEK_END);
-#ifdef SUNOS
   size = ftell(fp);
-#else /* not SUNOS */
-  fgetpos(fp, &size);
-#endif /* SUNOS */
   rewind(fp);
 
   buf = alloca(size + 1);

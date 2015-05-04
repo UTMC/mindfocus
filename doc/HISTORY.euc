@@ -1,0 +1,16 @@
+version 0.80
+	・最初の一般公開。
+
+version 0.85
+	・ソースディレクトリ名をMindFocusからmindfocus-{vesion}に変更。
+	・samples/Imakefileに問題があったので修正(草野さんに感謝)。
+	・+COMMENT、+DESCをFreeBSD用のpackageを元に追加(ixtl君に感謝)。
+	・アニメーションで1000ミリ秒以上のウェイトがあるとアニメが止まって
+	しまうバグを修正(ixtl君に感謝)。
+	・SunOSだとコンパイルが通らなくなっていたのを修正(β君に感謝)。
+	・twmとの相性を改善(フォーカスウィンドウが存在しないとアニメーション
+	が停止してしまうのを修正した)。
+	・mindscriptの命令修正(randで指定した最大値だけ出る確立が小さく
+	なっていたのを修正)・追加(-,and,or,>,<,>=,<=,get-pos-by-per,
+	set-pos-by-per)。
+

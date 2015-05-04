@@ -28,7 +28,7 @@ CDEFINES += -DDEFAULTDIR=\"DATADIR\" \
 CFLAGS = $(CFLAGSS) $(CDEFINES)
 
 ComplexProgramTarget(mindfocus)
-InstallNamedNonExec(../system.mindfocus,system.mindfocus, DATADIR)
+InstallNamedNonExec(../system.mindfocus,system.mindfocus,DATADIR)
 
 mindfocus.o:: ../lib/inifile/inifile.h mfc.h
 mfc.o:: ../lib/grplib/grplib.h mfc.h
