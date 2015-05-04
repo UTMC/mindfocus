@@ -13,6 +13,9 @@
 #include "../lib/mindscript/mindscript.h"
 #include "./mfc.h"
 #include "./mindfocus.h"
+#ifdef DEBUG
+#include "../debug.h"
+#endif /* DEBUG */
 
 #define METHOD_PLUS  0
 #define METHOD_MINUS 1
@@ -793,4 +796,5 @@ main(int argc, char** argv)
   XCloseDisplay(d);
   ini_close(dotfile);
   exit(0);
+  return 0;
 }

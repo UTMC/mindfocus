@@ -33,7 +33,7 @@ all::
 # platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
 # platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.20 1999/01/09 14:18:56 dawes Exp $
 
-# operating system:  FreeBSD 3.3-RELEASE i386 [ELF] (3.3.0)
+# operating system:  FreeBSD 3.4-RELEASE i386 [ELF] (3.4.0)
 
    COMPRESSMANCMD = gzip -n
 

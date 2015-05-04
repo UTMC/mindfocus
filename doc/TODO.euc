@@ -2,4 +2,5 @@ cond が多重になってると落ちるかも。なぜ？
 error が解りにくい
 mod 演算が欲しい
 enllightenment 対策
+メモリリーク対策
 

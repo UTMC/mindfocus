@@ -7,6 +7,9 @@
 #include "../lib/mindscript/mindscript.h"
 #include "../configure.h"
 #include "mfc.h"
+#ifdef DEBUG
+#include "../debug.h"
+#endif /* DEBUG */
 
 static int error = 0;
 

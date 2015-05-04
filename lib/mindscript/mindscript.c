@@ -7,6 +7,11 @@
 #include "mindscript.h"
 
 #ifdef DEBUG
+#define __implement__
+#include "../../debug.h"
+#undef __implement__
+#define ms_new() _ms_new(__FILE__, __LINE__)
+
 static char* types[] = {
   "<number>", "<symbol>", "begin", "cond", "setq", "rand", "equal",
   "chg-grp", "main", "define", "pair", "plus", "minus", "and", "or",
@@ -19,9 +24,9 @@ static char* types[] = {
 #endif /* DEBUG */
 
 static MSWORKEXP* symbol;
+static int symbolnum;
 static MSWORKEXP mainexp;
 static char** symboltable;
-static int symbolnum;
 static int nest;
 static int flag = 0;
 
@@ -218,16 +223,87 @@ ms_check(char* buf, int size, char* exp)
   return !strncmp(buf, exp, size);
 }
 
+#ifdef DEBUG
+static MSWORKEXP*
+_ms_new(const char* fname, int line)
+{
+  return ___d_malloc(sizeof(MSWORKEXP), fname, line);
+}
+#else /* DEBUG */
 static MSWORKEXP*
 ms_new()
 {
   return malloc(sizeof(MSWORKEXP));
 }
+#endif /* DEBUG */
 
-/* 構造体たどるのが面倒なので後回し */
 static void
 ms_free(MSWORKEXP* exp)
 {
+  int i;
+  int limit;
+
+  if((NULL != exp) && (MSTYPENULL != exp->type)){
+    switch (exp->type){
+    case MSTYPEMAIN:
+    case MSTYPEPAIR:
+    case MSTYPEEQUAL:
+    case MSTYPEPLUS:
+    case MSTYPEMINUS:
+    case MSTYPEAND:
+    case MSTYPEOR:
+    case MSTYPEGT:
+    case MSTYPELT:
+    case MSTYPEGE:
+    case MSTYPELE:
+      ms_free(((MSWORKPAIR*)(exp->ptr))->exp1);
+      ms_free(((MSWORKPAIR*)(exp->ptr))->exp2);
+    case MSTYPENUMBER:
+    case MSTYPESYMBOL:
+    case MSTYPEGETXBP:
+    case MSTYPEGETXFL:
+    case MSTYPEGETXFR:
+    case MSTYPEGETYBP:
+    case MSTYPEGETYFT:
+    case MSTYPEGETYFB:
+      free(exp->ptr);
+      break;
+    case MSTYPEBEGIN:
+      limit = ((MSWORKBEGIN*)(exp->ptr))->num;
+      for (i = 0; i < limit; i++) ms_free(((MSWORKBEGIN*)(exp->ptr))->exps[i]);
+      free(((MSWORKBEGIN*)(exp->ptr))->exps);
+      free(exp->ptr);
+      break;
+    case MSTYPECOND:
+      limit = ((MSWORKCOND*)(exp->ptr))->num;
+      for (i = 0; i < limit; i++){
+	ms_free(((MSWORKCOND*)(exp->ptr))->exps[i]->exp1);
+	ms_free(((MSWORKCOND*)(exp->ptr))->exps[i]->exp2);
+      }
+      free(((MSWORKCOND*)(exp->ptr))->exps);
+      free(exp->ptr);
+      break;
+    case MSTYPESETQ:
+      ms_free(((MSWORKSETQ*)(exp->ptr))->exp);
+      free(exp->ptr);
+      break;
+    case MSTYPERAND:
+    case MSTYPECHGGRP:
+    case MSTYPESETXBP:
+    case MSTYPESETXFL:
+    case MSTYPESETXFR:
+    case MSTYPESETYBP:
+    case MSTYPESETYFT:
+    case MSTYPESETYFB:
+      ms_free(((MSWORKRAND*)(exp->ptr))->exp);
+      free(exp->ptr);
+      break;
+    default:
+      ms_error("unknown ms-structure detect!");
+      break;
+    }
+    if (exp->type != MSTYPEMAIN) free(exp);
+  }
 }
 
 static void
@@ -259,6 +335,7 @@ ms_stack_pop()
 static void
 ms_stack_free()
 {
+  int i;
   if(stack.buf){
     free(stack.buf);
     stack.buf = NULL;
@@ -281,14 +358,14 @@ ms_makestruct(int stack)
   case MSTYPEBEGIN:
     buf[0]->ptr = malloc(sizeof(MSWORKBEGIN));
     ((MSWORKBEGIN*)buf[0]->ptr)->num = stack - 1;
-    ((MSWORKBEGIN*)buf[0]->ptr)->exps = malloc(sizeof(MSWORKEXP*) * (stack - 1));
+    ((MSWORKBEGIN*)buf[0]->ptr)->exps = (MSWORKEXP**)malloc(sizeof(MSWORKEXP*) * (stack - 1));
     for(i = 1; i < stack; i++)
       ((MSWORKBEGIN*)buf[0]->ptr)->exps[i-1] = buf[i];
     break;
   case MSTYPECOND:
     buf[0]->ptr = malloc(sizeof(MSWORKCOND));
     ((MSWORKCOND*)buf[0]->ptr)->num = stack - 1;
-    ((MSWORKCOND*)buf[0]->ptr)->exps = malloc(sizeof(MSWORKPAIR*) * (stack - 1));
+    ((MSWORKCOND*)buf[0]->ptr)->exps = (MSWORKPAIR**)malloc(sizeof(MSWORKPAIR*) * (stack - 1));
     for(i = 1; i < stack; i++)
       ((MSWORKCOND*)buf[0]->ptr)->exps[i-1] = (MSWORKPAIR*)buf[i]->ptr;
     break;
@@ -428,14 +505,14 @@ static int
 ms_define_symbol(char* str, int size)
 {
   if(0 == symbolnum){
-    symboltable = malloc(sizeof(char*));
-    symbol = malloc(sizeof(MSWORKEXP));
+    symboltable = (char **)malloc(sizeof(char*));
+    symbol = (MSWORKEXP*)malloc(sizeof(MSWORKEXP));
   }else{
-    symboltable = realloc(symboltable, sizeof(char*) * (symbolnum + 1));
-    symbol = realloc(symbol, sizeof(MSWORKEXP) * (symbolnum + 1));
+    symboltable = (char**)realloc(symboltable, sizeof(char*) * (symbolnum + 1));
+    symbol = (MSWORKEXP*)realloc(symbol, sizeof(MSWORKEXP) * (symbolnum + 1));
   }
-
-  symboltable[symbolnum] = malloc(size + 1);
+  
+  symboltable[symbolnum] = (char*)malloc(size + 1);
   strncpy(symboltable[symbolnum], str, size);
   symboltable[symbolnum][size] = 0;
   symbolnum++;
@@ -451,8 +528,8 @@ ms_free_symbol()
     free(symboltable[i]);
   }
   free(symboltable);
-  symboltable = NULL;
   symbolnum = 0;
+  symboltable = NULL;
 }
 
 static int
@@ -644,10 +721,11 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	newexp = ms_new();
 	*buf += size;
 	nest++;
-        if(exp->type == MSTYPECOND)
+        if(exp->type == MSTYPECOND){
 	  newexp->type = MSTYPEPAIR;
-	else
+	}else{
 	  newexp->type = MSTYPENULL;
+	}
 	if(ms_load_sub(buf, newexp)){
 	  stack++;
 	}else{
@@ -668,6 +746,11 @@ ms_load_sub(char** buf, MSWORKEXP* exp)
 	nest--;
 	return ms_makestruct(stack);
       default:
+ 	if (exp->type == MSTYPECOND) {
+	  exp->ptr = NULL;
+	  ms_error("'cond' needs pair of expression");
+	  return 0;
+ 	}
 	if(isdigit(**buf)){
 	  /* 数値 */
 	  newexp = ms_new();
@@ -761,10 +844,11 @@ ms_init(const char* src)
   size = ftell(fp);
   rewind(fp);
 
-  buf = alloca(size + 1);
+  buf = (char*)alloca(size + 1);
   fread(buf, size, 1, fp);
   buf[size] = 0;
   fclose(fp);
+  symbolnum = 0;
 
   flag = ms_load(buf);
   return flag;
@@ -773,6 +857,12 @@ ms_init(const char* src)
 void
 ms_trash()
 {
+  int i;
+  if(NULL != symbol){
+    ms_free(symbol);
+    symbol = NULL;
+  }
+  ms_stack_free();
   flag = 0;
   ms_free(&mainexp);
 }
