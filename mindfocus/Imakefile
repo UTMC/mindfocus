@@ -1,0 +1,36 @@
+#include "../configure.h"
+
+#ifdef XPM
+XPMLIB = XPMLIBRARY
+#else /* XPM */
+XPMLIB =
+#endif /* XPM */
+
+
+DEPLIBS = $(DEPXLIB) \
+	../lib/inifile/libinifile.a \
+	../lib/grplib/libgrplib.a \
+	../lib/mindscript/libmindscript.a
+
+LOCAL_LIBRARIES = -linifile -L../lib/inifile \
+	-lgrplib -L../lib/grplib \
+	-lmindscript -L../lib/mindscript \
+	-lXext $(XPMLIB) -lX11
+
+BINDIR = INSTALLDIR
+
+SRCS = mindfocus.c mfc.c
+OBJS = mindfocus.o mfc.o
+
+CDEFINES += -DDEFAULTDIR=\"DATADIR\" \
+	-DSYSTEMRC=\"DATADIR/system.mindfocus\"
+
+CFLAGS = $(CFLAGSS) $(CDEFINES)
+
+ComplexProgramTarget(mindfocus)
+InstallNamedNonExec(../system.mindfocus,system.mindfocus, DATADIR)
+
+mindfocus.o:: ../lib/inifile/inifile.h mfc.h
+mfc.o:: ../lib/grplib/grplib.h mfc.h
+
+

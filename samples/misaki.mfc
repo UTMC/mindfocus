@@ -1,0 +1,8 @@
+ANIME=4
+SRC=./pixmaps/misaki0.xpm ./pixmaps/misaki1.xpm ./pixmaps/misaki2.xpm ./pixmaps/misaki3.xpm
+SCRIPT=./scripts/eye.ms
+FORMAT=XPM
+WIDTH=80
+HEIGHT=128
+CX=40
+CY=96

@@ -1,0 +1,22 @@
+#include "../configure.h"
+
+InstallNamedNonExec(scripts/eye.ms,eye.ms,DATADIR/scripts)
+
+InstallNamedNonExec(akane.mfc,akane.mfc,DATADIR)
+InstallNamedNonExec(pixmaps/akane0.xpm,akane0.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/akane1.xpm,akane1.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/akane2.xpm,akane2.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/akane3.xpm,akane3.xpm,DATADIR/pixmaps)
+
+InstallNamedNonExec(misaki.mfc,misaki.mfc,DATADIR)
+InstallNamedNonExec(pixmaps/misaki0.xpm,misaki0.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/misaki1.xpm,misaki1.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/misaki2.xpm,misaki2.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/misaki3.xpm,misaki3.xpm,DATADIR/pixmaps)
+
+InstallNamedNonExec(nanase.mfc,nanase.mfc,DATADIR)
+InstallNamedNonExec(pixmaps/nanase0.xpm,nanase0.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/nanase1.xpm,nanase1.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/nanase2.xpm,nanase2.xpm,DATADIR/pixmaps)
+InstallNamedNonExec(pixmaps/nanase3.xpm,nanase3.xpm,DATADIR/pixmaps)
+

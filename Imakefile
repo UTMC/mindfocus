@@ -1,0 +1,20 @@
+#include "configure.h"
+
+#define IHaveSubdirs
+
+SUBDIRS = lib/inifile \
+	lib/grplib \
+	lib/mindscript \
+	mindfocus \
+	$(XPMSUBDIRS) \
+	$(SHAPESUBDIRS) \
+	samples
+
+CDEFINES += -DDEFAULTDIR=\"DATADIR\" \
+	-DSYSTEMRC=\"DATADIR/system.mindfocus\"
+
+CFLAGS = $(CFLAGSS) $(CDEFINES)
+
+#define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
+
+MakeSubdirs($(SUBDIRS))

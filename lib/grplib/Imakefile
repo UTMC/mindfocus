@@ -1,0 +1,13 @@
+#include "../../configure.h"
+
+OBJS = grplib.o
+
+#ifdef XPM
+XPM_H = xpmlib.h
+#else /* XPM */
+XPM_H =
+#endif /* XPM */
+NormalLibraryTarget(grplib, $(OBJS))
+
+grplib.o:: grplib.h $(XPM_H)
+

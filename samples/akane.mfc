@@ -1,0 +1,8 @@
+ANIME=4
+SRC=./pixmaps/akane0.xpm ./pixmaps/akane1.xpm ./pixmaps/akane2.xpm ./pixmaps/akane3.xpm
+SCRIPT=./scripts/eye.ms
+FORMAT=XPM
+WIDTH=80
+HEIGHT=128
+CX=40
+CY=96

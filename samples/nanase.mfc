@@ -1,0 +1,8 @@
+ANIME=4
+SRC=./pixmaps/nanase0.xpm ./pixmaps/nanase1.xpm ./pixmaps/nanase2.xpm ./pixmaps/nanase3.xpm
+SCRIPT=./scripts/eye.ms
+FORMAT=XPM
+WIDTH=88
+HEIGHT=128
+CX=44
+CY=95

@@ -1,0 +1,8 @@
+
+1. edit 'configure.h'
+2. $ xmkmf
+3. $ make Makefiles
+4. $ make all
+5. $ su
+6. # make install
+
