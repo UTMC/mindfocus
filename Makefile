@@ -464,7 +464,7 @@ SUBDIRS = lib/inifile 	lib/grplib 	lib/mindscript 	mindfocus 	$(XPMSUBDIRS) 	$(S
 
 CDEFINES += -DDEFAULTDIR=\"${HOME}/share/mindfocus\" 	-DSYSTEMRC=\"${HOME}/share/mindfocus/system.mindfocus\"
 
-CFLAGS = $(CFLAGSS) $(CDEFINES)
+CFLAGS += $(CDEFINES)
 
 all::
 	@for flag in ${MAKEFLAGS} ''; do \
@@ -474,6 +474,8 @@ all::
 	echo "making" all "in $(CURRENT_DIR)/$$i..."; \
 	(cd $$i &&  $(MAKE) $(MFLAGS) 'CDEBUGFLAGS=$(CDEBUGFLAGS)' all); \
 	done
+
+depend:
 
 # ----------------------------------------------------------------------
 # common rules for all Makefiles - do not edit

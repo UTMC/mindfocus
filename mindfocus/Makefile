@@ -473,7 +473,7 @@ OBJS = mindfocus.o mfc.o
 
 CDEFINES += -DDEFAULTDIR=\"${HOME}/share/mindfocus\" 	-DSYSTEMRC=\"${HOME}/share/mindfocus/system.mindfocus\"
 
-CFLAGS = $(CFLAGSS) $(CDEFINES)
+CFLAGS += $(CDEFINES)
 
  PROGRAM = mindfocus
 

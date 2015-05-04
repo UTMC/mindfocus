@@ -25,7 +25,7 @@ OBJS = mindfocus.o mfc.o
 CDEFINES += -DDEFAULTDIR=\"DATADIR\" \
 	-DSYSTEMRC=\"DATADIR/system.mindfocus\"
 
-CFLAGS = $(CFLAGSS) $(CDEFINES)
+CFLAGS += $(CDEFINES)
 
 ComplexProgramTarget(mindfocus)
 InstallNamedNonExec(../system.mindfocus,system.mindfocus,DATADIR)

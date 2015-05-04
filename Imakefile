@@ -13,8 +13,10 @@ SUBDIRS = lib/inifile \
 CDEFINES += -DDEFAULTDIR=\"DATADIR\" \
 	-DSYSTEMRC=\"DATADIR/system.mindfocus\"
 
-CFLAGS = $(CFLAGSS) $(CDEFINES)
+CFLAGS += $(CDEFINES)
 
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
 MakeSubdirs($(SUBDIRS))
+
+depend:

@@ -1,2 +1,3 @@
-selectでまつのはやめ。
-Xのキューを調べる。
+selectでまつのはやめ。
+Xのキューを調べる。
+ini_open()->fclose(fp);
