@@ -121,7 +121,7 @@ mfc_open(Display* d, Window w, const char* filename)
 #endif /* ANIMATION */
 
   /* chdir to mfc file dir */
-  dir = alloca(strlen(filename + 1));
+  dir = alloca(strlen(filename) + 1);
   if(NULL != dir){
     strcpy(dir, filename);
     file2dir(dir);

@@ -45,25 +45,9 @@ static int xfd;
 static int anime_pipe[2];
 static XEvent retry_event;
 
+#ifdef DEBUG
 int _Xdebug = 1;
-
-#if 0
-int
-xerr(Display* d, XErrorEvent* e)
-{
-  char message[1024];
-
-  return _XError(d, e);
-/*
-  if(e->resourceid == w){
-    fprintf(stderr, "mindfocus: X protocol error\n\t%d, %d, %d, %d, %d, %d\n",
-	    e->type, e->display, e->resourceid, e->serial,
-	    e->error_code, e->request_code, e->minor_code);
-  }
-  return 0;
-*/
-}
-#endif
+#endif /* DEBUG */
 
 void
 calcpos(int* x, int* y, POSITION* pos)
@@ -227,6 +211,7 @@ getpos(int title, int* x, int* y, POSITION* pos, Window* win)
     /* root window */
     XGetGeometry(d, *win, &root, &pos->win_x, &pos->win_y,
 		 &pos->win_w, &height, &border, &depth);
+    XSendEvent(d, w, True, 0, &retry_event);
     calcpos(x, y, pos);
     return;
   }
@@ -307,10 +292,12 @@ mainloop(INIFILE* ini, const char* position)
   XEvent event;
   Window win;
   fd_set in_set;
-  char command;
+  char command[256];
+  int num_of_com;
   int fd_max;
   struct itimerval timer;
   struct sigaction sig;
+  int i;
 
   ptr = ini_getstr(ini, "TITLE");
   title = (NULL == ptr)? 0: atoi(ptr);
@@ -379,20 +366,22 @@ mainloop(INIFILE* ini, const char* position)
     /* mindfocus message is comming */
     if(FD_ISSET(anime_pipe[0], &in_set)){
       /* check command type */
-      read(anime_pipe[0], &command, 1);
-      switch(command){
-      case PIPE_DISPLAY:
-	/* redraw */
-	disp_grp();
-	break;
-      case PIPE_MOVE:
-	/* move */
-	getpos(title, &x, &y, &winpos, &win);
-	/* calcpos(&x, &y, &winpos);*/
-	values.x = x - mfc->cx;
-	values.y = y - mfc->cy;
-	XConfigureWindow(d, w, CWX|CWY, &values);
-	break;
+      num_of_com = read(anime_pipe[0], command, 256);
+      for(i = 0; i<num_of_com; i++){
+	switch(command[i]){
+	case PIPE_DISPLAY:
+	  /* redraw */
+	  disp_grp();
+	  break;
+	case PIPE_MOVE:
+	  /* move */
+	  getpos(title, &x, &y, &winpos, &win);
+	  /* calcpos(&x, &y, &winpos);*/
+	  values.x = x - mfc->cx;
+	  values.y = y - mfc->cy;
+	  XConfigureWindow(d, w, CWX|CWY, &values);
+	  break;
+	}
       }
     }
 
@@ -402,42 +391,43 @@ mainloop(INIFILE* ini, const char* position)
     }
 
     /* check event queue */
-    if(!XEventsQueued(d, QueuedAfterFlush))
-      continue;
-    XNextEvent(d, &event);
-    switch(event.type){
-    case FocusOut:
-    case FocusIn:
-    case ConfigureNotify:
-      break;
-    case ButtonPress:
-/*
-      if(event.xany.window != w)
+    while(XEventsQueued(d, QueuedAfterFlush)){
+      XNextEvent(d, &event);
+      switch(event.type){
+      case FocusOut:
+      case FocusIn:
+	break;
+      case ConfigureNotify:
 	continue;
+      case ButtonPress:
+/*
+	if(event.xany.window != w)
+	  continue;
 */
-      break;
-    default:
-      continue;
-    }
+	break;
+      default:
+	continue;
+      } /* switch(event.type) */
 
-    ox = x;
-    oy = y;
-    getpos(title, &x, &y, &winpos, &win);
+      ox = x;
+      oy = y;
+      getpos(title, &x, &y, &winpos, &win);
 
-    if((ox == x) && (oy == y)){
-      stackctl(win, stack, title);
-      continue;
-    }
-
-    if((x > 0) || (y > 0)){
-      values.x = x - mfc->cx;
-      values.y = y - mfc->cy;
-      XConfigureWindow(d, w, CWX|CWY, &values);
-      if(stackctl(win, stack, title)){
-	XFlush(d);
+      if((ox == x) && (oy == y)){
+	stackctl(win, stack, title);
+	continue;
       }
-    }
-  }
+
+      if((x > 0) || (y > 0)){
+	values.x = x - mfc->cx;
+	values.y = y - mfc->cy;
+	XConfigureWindow(d, w, CWX|CWY, &values);
+	if(stackctl(win, stack, title)){
+	  XFlush(d);
+	}
+      }
+    } /* while(XEventsQueued(d, QueuedAfterFlush)) */
+  } /* for(;;) */
 
   bzero(&timer, sizeof(struct itimerval));
   setitimer(0, &timer, NULL);
@@ -518,11 +508,6 @@ main(int argc, char** argv)
     help(3);
   }
 
-#if 0
-  /* set X error handler */
-  XSetErrorHandler(xerr);
-#endif
-
   /* connect */
   d = XOpenDisplay(NULL);
   if(NULL == d){
@@ -531,7 +516,7 @@ main(int argc, char** argv)
     help(4);
   }
   w = XCreateSimpleWindow(d, RootWindow(d, 0), 0, 0, 1, 1, 0, 0, 0);
-  XSelectInput(d, w, ButtonPressMask);
+  XSelectInput(d, w, ButtonPressMask|MF_MASK);
 
   /* load mfc file */
   if(NULL == mfcfilename)
